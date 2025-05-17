@@ -1,0 +1,926 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Load & Stuffing Calculation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-4Q6Gf2aSP4eDXB8Miphtr37CMZZQ5oXLH2yaXMJ2w8e2ZtHTl7GptT4jmndRuHDT" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/css/alertify.min.css" />
+
+    <style>
+        /* ... (keep existing styles) ... */
+
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .section-title {
+            color: #2c3e50;
+            font-weight: 600;
+            margin: 1.5rem 0 1rem;
+        }
+
+        .group-list {
+            list-style: none;
+            padding-left: 1.5rem;
+        }
+
+        .group-list li {
+            margin-bottom: 0.5rem;
+        }
+
+        .border-separator {
+            border-bottom: 2px solid #ecf0f1;
+            margin: 1.5rem 0;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #34495e;
+        }
+
+        .main-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+        }
+
+        @keyframes fadeInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-heading {
+            animation: fadeInUp 1s ease-in-out;
+        }
+
+        .underline {
+            width: 33rem;
+            height: 4px;
+            background-color: #0d6efd;
+            /* Bootstrap primary color */
+            margin: 10px auto 0;
+            border-radius: 5px;
+            transition: width 0.3s ease;
+        }
+
+        .animate-heading:hover .underline {
+            width: 140px;
+        }
+
+        .cargo-type-option.selected {
+            border-color: #0d6efd;
+            /* Bootstrap primary blue */
+            background-color: #e7f1ff;
+            box-shadow: 0 0 8px #0d6efd88;
+        }
+
+        .product-table {
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+
+        .product-table th {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .product-table td,
+        .product-table th {
+            vertical-align: middle;
+            padding: 0.5rem;
+        }
+
+        .product-table tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .truck-type-option img {
+            width: 60px;
+            height: auto;
+            object-fit: contain;
+        }
+
+        .truck-type-option.selected {
+            border: 2px solid #0d6efd !important;
+            box-shadow: 0 0 10px rgba(13, 110, 253, 0.5);
+        }
+
+        .tr-type-option.selected {
+            border: 2px solid #0d6efd !important;
+            box-shadow: 0 0 10px rgba(13, 110, 253, 0.5);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container py-1">
+        <!-- ... (keep existing header and main card structure) ... -->
+
+        <div class="text-center mb-4 animate-heading">
+            <h1 class="page-title">Load & Stuffing Calculation</h1>
+            <div class="underline"></div>
+        </div>
+
+        <div class="main-card mx-auto" style="max-width: 1250px;">
+
+            <div class="mx-auto" style="max-width: 1200px;">
+                <!-- Nav Pills -->
+                <ul class="nav nav-pills nav-justified bg-white shadow-sm  px-3 py-2 mb-4" id="pills-tab"
+                    role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active  fw-bold text-dark" id="pills-products-tab" data-bs-toggle="pill"
+                            data-bs-target="#pills-products" type="button" role="tab" aria-controls="pills-products"
+                            aria-selected="true">
+                            📦 Products
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-bold text-dark" id="pills-truck-tab" data-bs-toggle="pill"
+                            data-bs-target="#pills-truck" type="button" role="tab" aria-controls="pills-truck"
+                            aria-selected="false">
+                            🚚 Truck & Container
+                        </button>
+                    </li>
+                    <!-- <li class="nav-item" role="presentation">
+                        <button class="nav-link rounded-pill fw-bold text-dark" id="pills-result-tab"
+                            data-bs-toggle="pill" data-bs-target="#pills-result" type="button" role="tab"
+                            aria-controls="pills-result" aria-selected="false">
+                            📦 Stuffing Result
+                        </button>
+                    </li> -->
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content p-4 bg-white shadow rounded" id="pills-tabContent">
+                    <div class="tab-pane fade show active" id="pills-products" role="tabpanel"
+                        aria-labelledby="pills-products-tab">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <button type="button" class="btn btn-outline-primary btn-sm fw-semibold"
+                                data-bs-toggle="modal" data-bs-target="#addGroupModal">
+                                ➕ Add Group
+                            </button>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-success btn-sm fw-semibold">
+                                    📊 Export Excel
+                                </button>
+                                <button class="btn btn-outline-danger btn-sm fw-semibold">
+                                    📄 Export PDF
+                                </button>
+                            </div>
+                        </div>
+                        <div id="groupsContainer" class="row g-3 mt-3" style="display:none;">
+
+                        </div>
+
+                    </div>
+
+                    <div class="tab-pane fade" id="pills-truck" role="tabpanel" aria-labelledby="pills-result-tab">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="d-flex gap-2">
+                                <select id="truckContainerType" class="form-select form-select-sm" style="width: auto;">
+                                    <option selected disabled>➕ Add Truck / Container</option>
+                                    <option value="Truck">🚚 Truck</option>
+                                    <option value="Container">📦 Container</option>
+                                </select>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-success btn-sm fw-semibold">
+                                    📊 Export Excel
+                                </button>
+                                <button class="btn btn-outline-danger btn-sm fw-semibold">
+                                    📄 Export PDF
+                                </button>
+                            </div>
+                        </div>
+                        <div id="selectedTruckDisplay" class="mt-3 fw-bold text-primary"></div>
+                        <div id="selectedContainerDisplay" class="row mt-4"></div>
+                    </div>
+
+
+
+                    <!-- Stuffing Result Tab -->
+                    <div class="tab-pane fade" id="pills-result" role="tabpanel" aria-labelledby="pills-result-tab">
+                        <h5 class="section-title text-danger">📊 Stuffing Summary</h5>
+                        <ul class="group-list">
+                            <li>🔹 Total Volume Used: 75%</li>
+                            <li>🔹 Weight Used: 16 Tons</li>
+                            <li>🔹 Remaining Capacity: 4 Tons</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="addGroupModal" tabindex="-1" aria-labelledby="addGroupModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg"> <!-- Centered and medium size -->
+                <div class="modal-content shadow-lg rounded-4 border-0">
+                    <div class="modal-header bg-primary text-white rounded-top-4">
+                        <h5 class="modal-title" id="addGroupModalLabel">
+                            <i class="bi bi-folder-plus me-2"></i> Add New Group
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body px-4 py-3 bg-light">
+                        <form>
+                            <div class="mb-4">
+                                <label for="groupName" class="form-label fw-semibold">Group Name <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control form-control-sm" id="groupName"
+                                    placeholder="Enter group name" required>
+                            </div>
+                            <div class="mb-4">
+                                <label for="groupDescription" class="form-label fw-semibold">Description</label>
+                                <textarea class="form-control form-control-sm" id="groupDescription" rows="4"
+                                    placeholder="Enter description"></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer border-0 px-4 py-3">
+                        <button type="button" class="btn btn-sm btn-outline-secondary fw-semibold"
+                            data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-sm btn-primary fw-semibold shadow-sm">Save Group</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Product Modal -->
+        <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addProductModalLabel">Add Product</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="selectedCargoType">
+                        <div id="cargoTypeOptions" class="d-flex gap-4 flex-wrap mb-3">
+                            <div class="cargo-type-option text-center p-2 border rounded cursor-pointer"
+                                data-value="BOX" style="width: 100px;">
+                                <div style="font-size: 40px;">📦</div>
+                                <div>BOX</div>
+                            </div>
+                            <div class="cargo-type-option text-center p-2 border rounded cursor-pointer"
+                                data-value="BigBags" style="width: 100px;">
+                                <div style="font-size: 40px;">👜</div>
+                                <div>BigBags</div>
+                            </div>
+                            <div class="cargo-type-option text-center p-2 border rounded cursor-pointer"
+                                data-value="Stacks" style="width: 100px;">
+                                <div style="font-size: 40px;">🏷️</div>
+                                <div>Stacks</div>
+                            </div>
+                            <div class="cargo-type-option text-center p-2 border rounded cursor-pointer"
+                                data-value="Barrels" style="width: 100px;">
+                                <div style="font-size: 40px;">🛢️</div>
+                                <div>Barrels</div>
+                            </div>
+                            <div class="cargo-type-option text-center p-2 border rounded cursor-pointer"
+                                data-value="Rolls" style="width: 100px;">
+                                <div style="font-size: 40px; display: inline-block; transform: rotate(90deg);">🛢️</div>
+                                <div>Rolls</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="productName" class="form-label">Product Name</label>
+                            <input type="text" class="form-control form-control-sm" id="productName"
+                                placeholder="Enter product name">
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-2">
+                                <label for="productLength" class="form-label">Length</label>
+                                <input type="number" class="form-control form-control-sm" id="productLength"
+                                    placeholder="100 mm">
+                            </div>
+                            <div class="col-md-2">
+                                <label for="productWidth" class="form-label">Width</label>
+                                <input type="number" class="form-control form-control-sm" id="productWidth"
+                                    placeholder="100 mm">
+                            </div>
+                            <div class="col-md-2">
+                                <label for="productHeight" class="form-label">Height</label>
+                                <input type="number" class="form-control form-control-sm" id="productHeight"
+                                    placeholder="100 mm">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="productWeight" class="form-label">Weight</label>
+                                <input type="number" step="0.01" class="form-control form-control-sm" id="productWeight"
+                                    placeholder="100 kg">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="productQuantity" class="form-label">Quantity</label>
+                                <input type="number" class="form-control form-control-sm" id="productQuantity"
+                                    placeholder="2">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-sm btn-primary" id="saveProductBtn">Save Product</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!--  -->
+
+        <div class="modal fade" id="truckModal" tabindex="-1" aria-labelledby="truckModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+
+                    <!-- Header -->
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="truckModalLabel">Add Truck</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <!-- Body -->
+                    <div class="modal-body">
+                        <input type="hidden" id="selectedTruckTypeType">
+                        <div id="truckTypeOptions" class="d-flex gap-3 flex-wrap mb-3 justify-content-start">
+                            <div class="tr-type-option bg-white text-center p-3 border rounded shadow-sm cursor-pointer"
+                                data-value="Flatbed" data-img="img/fletbed.png" data-category="Heavy Duty"
+                                data-capacity="30 Tons" style="width: 120px;">
+                                <img src="img/fletbed.png" alt="Flatbed" class="img-fluid mb-2" style="height: 80px;">
+                                <div class="fw-semibold">Flatbed</div>
+                            </div>
+
+                            <!-- Refrigerated -->
+                            <div class="tr-type-option bg-white text-center p-3 border rounded shadow-sm cursor-pointer"
+                                data-value="Refrigerated" data-img="img/refri.png"
+                                data-category="Temperature-Controlled" data-capacity="15 Tons" style="width: 120px;">
+                                <img src="img/refri.png" alt="Refrigerated" class="img-fluid mb-2"
+                                    style="height: 80px;">
+                                <div class="fw-semibold">Refrigerated</div>
+                            </div>
+
+                            <!-- Trailor -->
+                            <div class="tr-type-option bg-white text-center p-3 border rounded shadow-sm cursor-pointer"
+                                data-value="Trailor" data-img="img/trailor.png" data-category="Oversized Load"
+                                data-capacity="20 Tons" style="width: 120px;">
+                                <img src="img/trailor.png" alt="Trailor" class="img-fluid mb-2" style="height: 80px;">
+                                <div class="fw-semibold">Trailor</div>
+                            </div>
+
+                            <!-- Tanker -->
+                            <div class="tr-type-option bg-white text-center p-3 border rounded shadow-sm cursor-pointer"
+                                data-value="Tanker" data-img="img/tanker.png" data-category="Liquid Transport"
+                                data-capacity="35 Tons" style="width: 120px;">
+                                <img src="img/tanker.png" alt="Tanker" class="img-fluid mb-2" style="height: 80px;">
+                                <div class="fw-semibold">Tanker</div>
+                            </div>
+
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="truckGroupSelect" class="form-label">Select Group</label>
+                            <select id="truckGroupSelect" class="form-select form-control-sm">
+                                <option value="">-- Select Group --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-sm btn-primary" id="saveTruckbtn">Save Truck</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+
+        <div class="modal fade" id="containerModal" tabindex="-1" aria-labelledby="containerModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+
+                    <!-- Header -->
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add Container</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <!-- Body -->
+                    <div class="modal-body">
+                        <input type="hidden" id="selectedContainerType">
+
+                        <div id="containerTypeOptions" class="d-flex gap-3 flex-wrap mb-3 justify-content-start">
+                            <!-- 20' STANDARD -->
+                            <div class="truck-type-option bg-white text-center p-3 border rounded shadow-sm cursor-pointer"
+                                data-value="20' STANDARD" data-img="img/smallCon.png" data-category="General Cargo"  data-capacity="45 Tons" style="width: 120px;">
+                                <img src="img/smallCon.png" alt="20' STANDARD" class="img-fluid mb-2"
+                                    style="height: 80px;">
+                                <div class="fw-semibold">20' STANDARD</div>
+                            </div>
+
+                            <!-- 40' STANDARD -->
+                            <div class="truck-type-option bg-white text-center p-3 border rounded shadow-sm cursor-pointer"
+                                data-value="40' STANDARD" data-img="img/redContainer.png" data-category="Dry Goods" data-capacity="30 Tons"  style="width: 120px;">
+                                <img src="img/redContainer.png" alt="40' STANDARD" class="img-fluid mb-2"
+                                    style="height: 80px;">
+                                <div class="fw-semibold">40' STANDARD</div>
+                            </div>
+
+                            <!-- 45' HIGH-CUBE -->
+                            <div class="truck-type-option bg-white text-center p-3 border rounded shadow-sm cursor-pointer"
+                                data-value="45' HIGH-CUBE" data-img="img/yellow.png" data-category="High Capacity" data-capacity="70 Tons" style="width: 120px;">
+                                <img src="img/yellow.png" alt="45' HIGH-CUBE" class="img-fluid mb-2"
+                                    style="height: 80px;">
+                                <div class="fw-semibold">45' HIGH-CUBE</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="containerGroupSelect" class="form-label">Select Group</label>
+                            <select id="containerGroupSelect" class="form-select form-select-sm">
+                                <option value="">-- Select Group --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-sm btn-primary" id="saveContainerBtn">Save
+                            Container</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+
+
+        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/alertify.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const saveGroupBtn = document.querySelector('#addGroupModal .btn-primary');
+                const groupNameInput = document.getElementById('groupName');
+                const groupDescInput = document.getElementById('groupDescription');
+                const groupsContainer = document.getElementById('groupsContainer');
+                const modalEl = document.getElementById('addGroupModal');
+                const modal = new bootstrap.Modal(modalEl);
+                const addProductModal = new bootstrap.Modal(document.getElementById('addProductModal'));
+                const selectedCargoTypeInput = document.getElementById('selectedCargoType');
+                const saveProductBtn = document.getElementById('saveProductBtn');
+
+                const productNameInput = document.getElementById('productName');
+                const productLengthInput = document.getElementById('productLength');
+                const productWidthInput = document.getElementById('productWidth');
+                const productHeightInput = document.getElementById('productHeight');
+                const productWeightInput = document.getElementById('productWeight');
+                const productQuantityInput = document.getElementById('productQuantity');
+                const selectBox = document.getElementById('truckContainerType');
+
+
+                // opena a modal for truck and container
+                selectBox.addEventListener('change', function () {
+                    const selected = this.value;
+
+                    if (selected === 'Truck') {
+                        const truckModal = new bootstrap.Modal(document.getElementById('truckModal'));
+                        truckModal.show();
+                    } else if (selected === 'Container') {
+                        const containerModal = new bootstrap.Modal(document.getElementById('containerModal'));
+                        containerModal.show();
+                    }
+
+                    // Reset select box to default
+                    this.selectedIndex = 0;
+                });
+
+
+                const options = document.querySelectorAll(".truck-type-option");
+                const hiddenInput = document.getElementById("selectedContainerType");
+
+                options.forEach(option => {
+                    option.addEventListener("click", () => {
+                        // Remove 'selected' class from all
+                        options.forEach(opt => opt.classList.remove("selected"));
+
+                        // Add 'selected' class to clicked
+                        option.classList.add("selected");
+
+                        // Store value
+                        const value = option.getAttribute("data-value");
+                        hiddenInput.value = value;
+                    });
+                });
+
+
+
+                const truckOptions = document.querySelectorAll(".tr-type-option");
+                const hiddenTruckInput = document.getElementById("selectedTruckTypeType");
+                const saveBtn = document.getElementById("saveTruckbtn");
+                const displayDiv = document.getElementById("selectedTruckDisplay");
+
+                truckOptions.forEach(option => {
+                    option.addEventListener("click", () => {
+                        truckOptions.forEach(opt => opt.classList.remove("selected"));
+                        option.classList.add("selected");
+                        hiddenTruckInput.value = option.getAttribute("data-value");
+                    });
+                });
+
+                saveBtn.addEventListener("click", () => {
+                    const selected = hiddenTruckInput.value;
+                    const selectedGroupIndex = document.getElementById("truckGroupSelect").value;
+
+                    const selectedOption = [...truckOptions].find(option =>
+                        option.classList.contains("selected")
+                    );
+
+                    if (selected && selectedGroupIndex !== "" && selectedOption) {
+                        const selectedImage = selectedOption.getAttribute("data-img");
+                        const selectedCategory = selectedOption.getAttribute("data-category");
+                        const selectedCapacity = selectedOption.getAttribute("data-capacity");
+
+                        const group = groups[selectedGroupIndex];
+                        const totalWeight = group.products.reduce((sum, product) => sum + parseFloat(product.weight || 0), 0);
+
+                        // ✅ Initialize productListHTML before using it
+                        let productListHTML = '';
+                        group.products.forEach(product => {
+                            productListHTML += `<li><strong>${product.type}:</strong> ${product.name}</li>`;
+                        });
+
+                        displayDiv.innerHTML = ''; // Clear previous
+
+                        const colDiv = document.createElement('div');
+                        colDiv.className = 'col-md-12 mb-3';
+
+                        const card = document.createElement('div');
+                        card.className = 'card shadow-lg border-0 overflow-hidden';
+
+                        card.innerHTML = `
+            <div class="row g-0">
+                <div class="col-md-4 d-flex align-items-center justify-content-center bg-light">
+                    <img src="${selectedImage}" class="img-fluid p-3" alt="${selected}" style="max-height: 180px;">
+                </div>
+                <div class="col-md-8">
+                    <div class="card-body">
+                        <h4 class="card-title text-primary mb-2">🚚 Truck Type: <span class="fw-bold">${selected}</span></h4>
+                        <p class="text-muted mb-2"><i class="bi bi-tags"></i> Category: <span class="badge bg-secondary">${selectedCategory}</span></p>
+                        <div class="mb-2"><span class="badge bg-success">Truck No: MH12AB1234</span></div>
+                        <div class="mb-2"><span class="badge bg-info text-dark">Capacity: ${selectedCapacity}</span></div>
+                        <hr>
+                        <p class="mb-1"><strong>Group Name:</strong> <span class="text-muted">${group.name}</span></p>
+                        <p class="mb-0"><strong>Total Weight:</strong> <span class="text-danger fw-semibold">${totalWeight} kg</span></p>
+                        <div class="mt-3">
+                            <strong>Products:</strong>
+                            <ul class="mb-0 ps-3">
+                                ${productListHTML}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+                        colDiv.appendChild(card);
+                        displayDiv.appendChild(colDiv);
+
+                        bootstrap.Modal.getInstance(document.getElementById("truckModal")).hide();
+                    } else {
+                        alert("Please select both a truck type and a group.");
+                    }
+                });
+
+                const containerOptions = document.querySelectorAll(".truck-type-option");
+                const hiddenContainerInput = document.getElementById("selectedContainerType");
+                const saveContainerBtn = document.getElementById("saveContainerBtn");
+                const containerDisplayDiv = document.getElementById("selectedContainerDisplay");
+
+                // Utility function to generate a unique container number (e.g., IN + timestamp + random digits)
+                function generateUniqueContainerNo() {
+                    const timestamp = Date.now().toString().slice(-6); // last 6 digits of timestamp
+                    const randomDigits = Math.floor(1000 + Math.random() * 9000); // 4 random digits
+                    return `IN${timestamp}${randomDigits}`;
+                }
+
+                saveContainerBtn.addEventListener("click", () => {
+                    const selected = hiddenContainerInput.value;
+                    const selectedGroupIndex = document.getElementById("containerGroupSelect").value;
+
+                    const selectedOption = [...containerOptions].find(option =>
+                        option.classList.contains("selected")
+                    );
+
+                    if (selected && selectedGroupIndex !== "" && selectedOption) {
+                        const selectedImage = selectedOption.querySelector('img')?.src || '';
+                        const selectedCategory = selectedOption.getAttribute("data-category") || "N/A";
+                        const selectedCapacity = selectedOption.getAttribute("data-capacity") || "20 Tons"; // fallback capacity
+
+                        const group = groups[selectedGroupIndex];
+                        const totalWeight = group.products.reduce((sum, product) => sum + parseFloat(product.weight || 0), 0);
+
+                        let productListHTML = '';
+                        group.products.forEach(product => {
+                            productListHTML += `<li><strong>${product.type}:</strong> ${product.name}</li>`;
+                        });
+
+                        containerDisplayDiv.innerHTML = ''; // Clear previous display
+
+                        const colDiv = document.createElement('div');
+                        colDiv.className = 'col-md-12 mb-3';
+
+                        const card = document.createElement('div');
+                        card.className = 'card shadow-lg border-0 overflow-hidden';
+
+                        card.innerHTML = `
+            <div class="row g-0">
+                <div class="col-md-4 d-flex align-items-center justify-content-center bg-light">
+                    <img src="${selectedImage}" class="img-fluid p-3" alt="${selected}" style="max-height: 180px;">
+                </div>
+                <div class="col-md-8">
+                    <div class="card-body">
+                        <h4 class="card-title text-primary mb-2">📦 Container Type: <span class="fw-bold">${selected}</span></h4>
+                        <p class="text-muted mb-2"><i class="bi bi-tags"></i> Category: <span class="badge bg-secondary">${selectedCategory}</span></p>
+                        <div class="mb-2"><span class="badge bg-success">Container No: ${generateUniqueContainerNo()}</span></div>
+                        <div class="mb-2"><span class="badge bg-info text-dark">Capacity: ${selectedCapacity}</span></div>
+                        <hr>
+                        <p class="mb-1"><strong>Group Name:</strong> <span class="text-muted">${group.name}</span></p>
+                        <p class="mb-0"><strong>Total Weight:</strong> <span class="text-danger fw-semibold">${totalWeight} kg</span></p>
+                        <div class="mt-3">
+                            <strong>Products:</strong>
+                            <ul class="mb-0 ps-3">
+                                ${productListHTML}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+                        colDiv.appendChild(card);
+                        containerDisplayDiv.appendChild(colDiv);
+
+                        // Hide the modal
+                        bootstrap.Modal.getInstance(document.getElementById("containerModal")).hide();
+
+                        // Clear selection for next container
+                        containerOptions.forEach(opt => opt.classList.remove("selected"));
+                        hiddenContainerInput.value = "";
+                        document.getElementById("containerGroupSelect").value = "";
+                    } else {
+                        alert("Please select both a container type and a group.");
+                    }
+                });
+
+
+
+
+
+                let groups = JSON.parse(localStorage.getItem('groups')) || [];
+                let editIndex = null;
+                let selectedGroupIndex = null;
+                let selectedProductIndex = null;
+
+                function renderGroups() {
+                    groupsContainer.innerHTML = '';
+                    if (groups.length === 0) {
+                        groupsContainer.style.display = 'none';
+                        return;
+                    }
+                    groupsContainer.style.display = 'flex';
+                    groups.forEach((group, index) => {
+                        const groupCard = document.createElement('div');
+                        groupCard.className = 'col-md-12 mb-3';
+                        groupCard.innerHTML = `
+                <div class="card border-primary h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <h5 class="card-title mb-1">${group.name}</h5>
+                                <p class="card-text text-muted mb-0">${group.description || ''}</p>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-warning edit-btn" data-index="${index}">Edit</button>
+                                <button class="btn btn-sm btn-danger delete-btn" data-index="${index}">Delete</button>
+                            </div>
+                        </div>
+                        
+                        ${group.products && group.products.length > 0 ? `
+                            <div class="mt-3">
+                                <table class="table product-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Type</th>
+                                            <th>Name</th>
+                                            <th>Dimensions</th>
+                                            <th>Weight</th>
+                                            <th>Qty</th>
+                                            <th>Total</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${group.products.map((product, pIndex) => `
+                                            <tr>
+                                                <td>${product.type}</td>
+                                                <td>${product.name}</td>
+                                                <td>${product.length}×${product.width}×${product.height}</td>
+                                                <td>${product.weight} kg</td>
+                                                <td>${product.quantity}</td>
+                                                <td>${(product.weight * product.quantity).toFixed(2)} kg</td>
+                                                <td>
+                                                    <button class="btn btn-sm  update-product-btn" data-group-index="${index}" data-product-index="${pIndex}">✏️</button>
+                                                    <button class="btn btn-sm  delete-product-btn" data-group-index="${index}" data-product-index="${pIndex}"> 🗑️</button>
+                                                </td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ` : ''}
+
+                        <div class="mt-2">
+                            <button class="btn btn-sm btn-light text-success border-success add-product-btn" data-index="${index}">
+                                ➕ Add Product
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+                        groupsContainer.appendChild(groupCard);
+                    });
+                }
+
+
+                function populateGroupDropdowns() {
+                    const truckSelect = document.getElementById('truckGroupSelect');
+                    const containerSelect = document.getElementById('containerGroupSelect');
+
+                    // Clear old options except the first
+                    truckSelect.length = 1;
+                    containerSelect.length = 1;
+
+                    groups.forEach((group, index) => {
+                        const option1 = new Option(group.name, index);
+                        const option2 = new Option(group.name, index);
+
+                        truckSelect.add(option1);
+                        containerSelect.add(option2);
+                    });
+                }
+
+
+                renderGroups();
+                populateGroupDropdowns();
+
+                groupsContainer.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('delete-btn')) {
+                        const idx = e.target.dataset.index;
+                        if (confirm('Are you sure you want to delete this group?')) {
+                            groups.splice(idx, 1);
+                            localStorage.setItem('groups', JSON.stringify(groups));
+                            renderGroups();
+                        }
+                    } else if (e.target.classList.contains('edit-btn')) {
+                        editIndex = e.target.dataset.index;
+                        const group = groups[editIndex];
+                        groupNameInput.value = group.name;
+                        groupDescInput.value = group.description || '';
+                        modal.show();
+                    } else if (e.target.classList.contains('add-product-btn')) {
+                        selectedGroupIndex = e.target.dataset.index;
+                        selectedProductIndex = null;
+                        document.querySelectorAll('.cargo-type-option').forEach(o => o.classList.remove('selected'));
+                        selectedCargoTypeInput.value = '';
+                        productNameInput.value = '';
+                        productLengthInput.value = '';
+                        productWidthInput.value = '';
+                        productHeightInput.value = '';
+                        productWeightInput.value = '';
+                        productQuantityInput.value = '';
+                        addProductModal.show();
+                    } else if (e.target.classList.contains('delete-product-btn')) {
+                        const gIndex = e.target.dataset.groupIndex;
+                        const pIndex = e.target.dataset.productIndex;
+                        if (confirm('Are you sure you want to delete this product?')) {
+                            groups[gIndex].products.splice(pIndex, 1);
+                            localStorage.setItem('groups', JSON.stringify(groups));
+                            renderGroups();
+                        }
+                    } else if (e.target.classList.contains('update-product-btn')) {
+                        selectedGroupIndex = e.target.dataset.groupIndex;
+                        selectedProductIndex = e.target.dataset.productIndex;
+                        const product = groups[selectedGroupIndex].products[selectedProductIndex];
+                        document.querySelectorAll('.cargo-type-option').forEach(o => o.classList.remove('selected'));
+                        document.querySelector(`.cargo-type-option[data-value="${product.type}"]`)?.classList.add('selected');
+                        selectedCargoTypeInput.value = product.type;
+                        productNameInput.value = product.name;
+                        productLengthInput.value = product.length;
+                        productWidthInput.value = product.width;
+                        productHeightInput.value = product.height;
+                        productWeightInput.value = product.weight;
+                        productQuantityInput.value = product.quantity;
+                        addProductModal.show();
+                    }
+                });
+
+                document.querySelectorAll('.cargo-type-option').forEach(option => {
+                    option.addEventListener('click', () => {
+                        document.querySelectorAll('.cargo-type-option').forEach(o => o.classList.remove('selected'));
+                        option.classList.add('selected');
+                        selectedCargoTypeInput.value = option.dataset.value;
+                    });
+                });
+
+                saveProductBtn.addEventListener('click', () => {
+                    const cargoType = selectedCargoTypeInput.value;
+                    const name = productNameInput.value.trim();
+                    const length = parseFloat(productLengthInput.value);
+                    const width = parseFloat(productWidthInput.value);
+                    const height = parseFloat(productHeightInput.value);
+                    const weight = parseFloat(productWeightInput.value);
+                    const quantity = parseInt(productQuantityInput.value);
+
+                    if (!cargoType || !name || isNaN(length) || isNaN(width) ||
+                        isNaN(height) || isNaN(weight) || isNaN(quantity)) {
+                        alertify.error('Please fill all fields with valid values');
+                        return;
+                    }
+
+                    const newProduct = {
+                        type: cargoType,
+                        name,
+                        length,
+                        width,
+                        height,
+                        weight,
+                        quantity
+                    };
+
+                    if (selectedProductIndex !== null) {
+                        groups[selectedGroupIndex].products[selectedProductIndex] = newProduct;
+                        alertify.success('Product updated successfully');
+                    } else {
+                        if (!groups[selectedGroupIndex].products) {
+                            groups[selectedGroupIndex].products = [];
+                        }
+                        groups[selectedGroupIndex].products.push(newProduct);
+                        alertify.success('Product added successfully');
+                    }
+
+                    localStorage.setItem('groups', JSON.stringify(groups));
+                    renderGroups();
+                    addProductModal.hide();
+                    selectedProductIndex = null;
+                });
+
+                saveGroupBtn.addEventListener('click', () => {
+                    const name = groupNameInput.value.trim();
+                    const description = groupDescInput.value.trim();
+
+                    if (!name) {
+                        alertify.error('Please enter a group name');
+                        return;
+                    }
+
+                    const groupData = {
+                        name: name,
+                        description: description,
+                        products: []
+                    };
+
+                    if (editIndex !== null) {
+                        groupData.products = groups[editIndex].products || [];
+                        groups[editIndex] = groupData;
+                    } else {
+                        groups.push(groupData);
+                    }
+
+                    localStorage.setItem('groups', JSON.stringify(groups));
+                    renderGroups();
+                    modal.hide();
+                    editIndex = null;
+                });
+            });
+        </script>
+</body>
+
+</html>
